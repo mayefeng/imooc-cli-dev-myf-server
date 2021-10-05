@@ -2,8 +2,10 @@
 
 module.exports = () => {
   return async (ctx, next) => {
-    const say = await ctx.service.user.say();
-    ctx.socket.emit('res', 'auth!' + say);
+    console.log('connect');
+    const { socket, logger } = ctx;
+    const query = socket.handshake.query;
+    logger.info('query', query);
     await next();
     console.log('disconnect!');
   };

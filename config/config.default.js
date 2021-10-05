@@ -2,6 +2,16 @@
 
 'use strict';
 
+// local
+// const REDIS_PORT = 6379;
+// const REDIS_HOST = '127.0.0.1';
+// const REDIS_PWD = '';
+
+// aliyun
+const REDIS_PORT = 6379;
+const REDIS_HOST = 'r-bp1a826nogx55pke5jpd.redis.rds.aliyuncs.com';
+const REDIS_PWD = 'myf:Myf123456';
+
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
@@ -25,10 +35,15 @@ module.exports = appInfo => {
         connectionMiddleware: [ 'auth' ],
         packetMiddleware: [ 'filter' ],
       },
-      '/chat': {
-        connectionMiddleware: [ 'auth' ],
-        packetMiddleware: [],
-      },
+    },
+  };
+
+  config.redis = {
+    client: {
+      port: REDIS_PORT, // Redis port
+      host: REDIS_HOST, // Redis host
+      password: REDIS_PWD,
+      db: 0,
     },
   };
 
