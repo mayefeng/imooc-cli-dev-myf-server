@@ -49,8 +49,17 @@ class CloudBuildTask {
   }
 
   async install() {
-    let res = true;
-    res && (res = await this.execCommand('npm install --registry=https://registry.npm.taobao.org'));
+    const res = await this.execCommand('npm install --registry=https://registry.npm.taobao.org');
+    return res ? this.success() : this.failed();
+  }
+
+  async build() {
+    let res;
+    if (checkCommand(this._buildCmd)) {
+      res = await this.execCommand(this._buildCmd);
+    } else {
+      res = false;
+    }
     return res ? this.success() : this.failed();
   }
 
@@ -99,6 +108,16 @@ class CloudBuildTask {
   }
 }
 
+function checkCommand(command) {
+  if (command) {
+    const commands = command.split(' ');
+    if (commands.length === 0 || ![ 'npm', 'cnpm' ].includes(commands[0])) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
 
 function exec(command, args, options) {
   const win32 = process.platform === 'win32';
