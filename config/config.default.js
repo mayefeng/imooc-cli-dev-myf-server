@@ -3,14 +3,14 @@
 'use strict';
 
 // local
-// const REDIS_PORT = 6379;
-// const REDIS_HOST = '127.0.0.1';
-// const REDIS_PWD = '';
+const REDIS_PORT = 6379;
+const REDIS_HOST = '127.0.0.1';
+const REDIS_PWD = '';
 
 // aliyun
-const REDIS_PORT = 6379;
-const REDIS_HOST = 'r-bp1a826nogx55pke5jpd.redis.rds.aliyuncs.com';
-const REDIS_PWD = 'myf:Myf123456';
+// const REDIS_PORT = 6379;
+// const REDIS_HOST = 'r-bp1a826nogx55pke5jpd.redis.rds.aliyuncs.com';
+// const REDIS_PWD = 'myf:Myf123456';
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
