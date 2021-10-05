@@ -1,5 +1,6 @@
 'use strict';
 const path = require('path');
+const fs = require('fs');
 const fse = require('fs-extra');
 const userHome = require('user-home');
 const Git = require('simple-git');
@@ -32,7 +33,19 @@ class CloudBuildTask {
     fse.ensureDirSync(this._dir);
     fse.emptyDirSync(this._dir);
     this._git = new Git(this._dir);
-    // return this.success();
+    return this.success();
+  }
+
+  async download() {
+    await this._git.clone(this._repo);
+    this._git = new Git(this._sourceCodeDir);
+    // git checkout -b dev/1.1.1 origin/dev/1.1.1
+    await this._git.checkout([
+      '-b',
+      this._branch,
+      `origin/${this._branch}`,
+    ]);
+    return fs.existsSync(this._sourceCodeDir) ? this.success() : this.failed();
   }
 
   success(message, data) {
