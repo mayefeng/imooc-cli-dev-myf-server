@@ -1,6 +1,7 @@
 'use strict';
 
 const CloudBuildTask = require('../models/CloudBuildTask');
+const { SUCCESS, FAILED } = require('../../const');
 
 const REDIS_PREFIX = 'cloudbuild';
 
@@ -22,11 +23,36 @@ async function createCloudBuildTask(ctx, app) {
   }, ctx);
 }
 
+async function prepare(cloudBuildTask, socket, helper) {
+  socket.emit('build', helper.parseMsg('prepare', {
+    message: '开始执行构建前的准备工作',
+  }));
+  const prepareRes = await cloudBuildTask.prepare();
+  if (!prepareRes || prepareRes.code === FAILED) {
+    socket.emit('build', helper.parseMsg('prepare failed', {
+      message: '执行构建前准备工作失败',
+    }));
+    return;
+  }
+  socket.emit('build', helper.parseMsg('prepare', {
+    message: '构建前准备工作成功',
+  }));
+}
+
 module.exports = app => {
   class Controller extends app.Controller {
     async index() {
       const { ctx, app } = this;
+      const { socket, helper } = ctx;
       const cloudBuildTask = await createCloudBuildTask(ctx, app);
+      try {
+        await prepare(cloudBuildTask, socket, helper);
+      } catch (error) {
+        socket.emit('build', helper.parseMsg('error', {
+          message: '云构建失败，失败原因：' + error.message,
+        }));
+        socket.disconnect();
+      }
     }
   }
   return Controller;

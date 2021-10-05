@@ -4,6 +4,8 @@ const fse = require('fs-extra');
 const userHome = require('user-home');
 const Git = require('simple-git');
 
+const { SUCCESS, FAILED } = require('../../const');
+
 class CloudBuildTask {
   constructor(options, ctx) {
     this._ctx = ctx;
@@ -30,6 +32,23 @@ class CloudBuildTask {
     fse.ensureDirSync(this._dir);
     fse.emptyDirSync(this._dir);
     this._git = new Git(this._dir);
+    // return this.success();
+  }
+
+  success(message, data) {
+    return this.response(SUCCESS, message, data);
+  }
+
+  failed(message, data) {
+    return this.response(FAILED, message, data);
+  }
+
+  response(code, message, data) {
+    return {
+      code,
+      message,
+      data,
+    };
   }
 }
 
