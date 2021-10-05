@@ -55,6 +55,22 @@ async function download(cloudBuildTask, socket, helper) {
   }));
 }
 
+async function install(cloudBuildTask, socket, helper) {
+  socket.emit('build', helper.parseMsg('install', {
+    message: '开始安装依赖',
+  }));
+  const installRes = await cloudBuildTask.install();
+  if (!installRes || installRes.code === FAILED) {
+    socket.emit('build', helper.parseMsg('install failed', {
+      message: '安装依赖失败',
+    }));
+    return;
+  }
+  socket.emit('build', helper.parseMsg('install', {
+    message: '安装依赖成功',
+  }));
+}
+
 module.exports = app => {
   class Controller extends app.Controller {
     async index() {
@@ -64,6 +80,7 @@ module.exports = app => {
       try {
         await prepare(cloudBuildTask, socket, helper);
         await download(cloudBuildTask, socket, helper);
+        await install(cloudBuildTask, socket, helper);
       } catch (error) {
         socket.emit('build', helper.parseMsg('error', {
           message: '云构建失败，失败原因：' + error.message,

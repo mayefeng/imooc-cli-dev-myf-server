@@ -48,6 +48,40 @@ class CloudBuildTask {
     return fs.existsSync(this._sourceCodeDir) ? this.success() : this.failed();
   }
 
+  async install() {
+    let res = true;
+    res && (res = await this.execCommand('npm install --registry=https://registry.npm.taobao.org'));
+    return res ? this.success() : this.failed();
+  }
+
+  execCommand(command) {
+    const commands = command.split(' ');
+    if (commands.length === 0) {
+      return null;
+    }
+    const firstCommand = commands[0];
+    const leftCommand = commands.slice(1) || [];
+    return new Promise(resolve => {
+      const p = exec(firstCommand, leftCommand, {
+        cwd: this._sourceCodeDir,
+      }, { stdio: 'pipe' });
+      p.on('error', e => {
+        this._ctx.logger.error('build error', e);
+        resolve(false);
+      });
+      p.on('exit', c => {
+        this._ctx.logger.info('build exit', c);
+        resolve(true);
+      });
+      p.stdout.on('data', data => {
+        this._ctx.socket.emit('building', data.toString());
+      });
+      p.stderr.on('data', data => {
+        this._ctx.socket.emit('building', data.toString());
+      });
+    });
+  }
+
   success(message, data) {
     return this.response(SUCCESS, message, data);
   }
@@ -63,6 +97,17 @@ class CloudBuildTask {
       data,
     };
   }
+}
+
+
+function exec(command, args, options) {
+  const win32 = process.platform === 'win32';
+
+  const cmd = win32 ? 'cmd' : command;
+  const cmdArgs = win32 ? [ '/c' ].concat(command, args) : args;
+  // cp.spawn('cmd', ['/c', 'node', '-e', code])
+  return require('child_process').spawn(cmd, cmdArgs, options || {});
+
 }
 
 module.exports = CloudBuildTask;
