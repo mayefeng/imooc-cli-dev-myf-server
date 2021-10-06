@@ -105,18 +105,18 @@ async function prePublish(cloudBuildTask, socket, helper) {
 }
 
 async function publish(cloudBuildTask, socket, helper) {
-  socket.emit('build', helper.parseMsg('build', {
-    message: '开始启动云构建',
+  socket.emit('build', helper.parseMsg('publish', {
+    message: '开始发布',
   }));
-  const buildRes = await cloudBuildTask.publish();
-  if (!buildRes || buildRes.code === FAILED) {
-    socket.emit('build', helper.parseMsg('build failed', {
-      message: '云构建任务执行失败',
+  const publishRes = await cloudBuildTask.publish();
+  if (!publishRes || publishRes.code === FAILED) {
+    socket.emit('build', helper.parseMsg('publish failed', {
+      message: '发布失败',
     }));
     return;
   }
-  socket.emit('build', helper.parseMsg('build', {
-    message: '云构建任务执行成功',
+  socket.emit('build', helper.parseMsg('publish', {
+    message: '发布成功',
   }));
 }
 

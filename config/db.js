@@ -12,7 +12,7 @@ const mongodbDbName = 'imooc-cli';
 const OSS_ACCESS_KEY = 'LTAI5tLNKC8ZDh23maYmjTHn';
 const OSS_ACCESS_SECRET_KEY = fs.readFileSync(path.resolve(userHome, '.imooc-cli-dev-myf', 'oss_access_secret_key')).toString();
 const OSS_PROD_BUCKET = 'myf-cli';
-const OSS_DEV_BUCKET = 'myf-cli-dev';
+const OSS_DEV_BUCKET = 'myf-cli-dev-bucket';
 const OSS_REGION = 'oss-cn-hangzhou';
 
 module.exports = {

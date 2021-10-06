@@ -4,6 +4,7 @@ const fs = require('fs');
 const fse = require('fs-extra');
 const userHome = require('user-home');
 const Git = require('simple-git');
+const glob = require('glob');
 
 const { SUCCESS, FAILED } = require('../../const');
 const config = require('../../../config/db');
@@ -43,7 +44,6 @@ class CloudBuildTask {
     } else {
       this.oss = new OSS(config.OSS_DEV_BUCKET);
     }
-    console.log('oss=======', this.oss);
     return this.success();
   }
 
@@ -96,7 +96,28 @@ class CloudBuildTask {
   }
 
   publish() {
-
+    return new Promise(resolve => {
+      glob('**', {
+        cwd: this._buildPath,
+        nodir: true,
+        ignore: '**/node_modules/**',
+      }, (err, files) => {
+        if (err) {
+          resolve(false);
+        } else {
+          Promise.all(files.map(async file => {
+            const filePath = path.resolve(this._buildPath, file);
+            const uploadOSSRes = await this.oss.put(`${this._name}/${file}`, filePath);
+            return uploadOSSRes;
+          })).then(() => {
+            resolve(true);
+          }).catch(err => {
+            this._ctx.logger.error(err);
+            resolve(false);
+          });
+        }
+      });
+    });
   }
 
   execCommand(command) {
