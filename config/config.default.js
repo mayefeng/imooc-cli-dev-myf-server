@@ -32,7 +32,9 @@ module.exports = appInfo => {
   config.io = {
     namespace: {
       '/': {
+        // 连接过程中的中间件
         connectionMiddleware: [ 'auth' ],
+        // 发起请求到服务的拦截，在controller中自定义处理事件之前
         packetMiddleware: [ 'filter' ],
       },
     },

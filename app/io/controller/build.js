@@ -87,6 +87,38 @@ async function build(cloudBuildTask, socket, helper) {
   }));
 }
 
+async function prePublish(cloudBuildTask, socket, helper) {
+  socket.emit('build', helper.parseMsg('pre-publish', {
+    message: '开始发布前的检查',
+  }));
+  const prePublishRes = await cloudBuildTask.prePublish();
+  if (!prePublishRes || prePublishRes.code === FAILED) {
+    socket.emit('build', helper.parseMsg('pre-publish failed', {
+      message: '发布前检查失败，失败原因：' + (prePublishRes && prePublishRes.message ? prePublishRes.message : '未知'),
+    }));
+    throw new Error('发布终止');
+  }
+  socket.emit('build', helper.parseMsg('pre-publish', {
+    message: '发布前检查通过',
+  }));
+}
+
+async function publish(cloudBuildTask, socket, helper) {
+  socket.emit('build', helper.parseMsg('build', {
+    message: '开始启动云构建',
+  }));
+  const buildRes = await cloudBuildTask.publish();
+  if (!buildRes || buildRes.code === FAILED) {
+    socket.emit('build', helper.parseMsg('build failed', {
+      message: '云构建任务执行失败',
+    }));
+    return;
+  }
+  socket.emit('build', helper.parseMsg('build', {
+    message: '云构建任务执行成功',
+  }));
+}
+
 module.exports = app => {
   class Controller extends app.Controller {
     async index() {
@@ -98,6 +130,8 @@ module.exports = app => {
         await download(cloudBuildTask, socket, helper);
         await install(cloudBuildTask, socket, helper);
         await build(cloudBuildTask, socket, helper);
+        await prePublish(cloudBuildTask, socket, helper);
+        await publish(cloudBuildTask, socket, helper);
       } catch (error) {
         socket.emit('build', helper.parseMsg('error', {
           message: '云构建失败，失败原因：' + error.message,

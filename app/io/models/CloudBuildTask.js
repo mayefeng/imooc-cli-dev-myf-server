@@ -63,6 +63,31 @@ class CloudBuildTask {
     return res ? this.success() : this.failed();
   }
 
+  prePublish() {
+    // 获取构建结果
+    const buildPath = this.findBuildPath();
+    // 检查构建结果
+    if (!buildPath) {
+      return this.failed('未找到构建结果，请检查');
+    }
+    this._buildPath = buildPath;
+    return this.success();
+  }
+
+  findBuildPath() {
+    const buildDir = [ 'dist', 'build' ];
+    const buildPath = buildDir.find(dir => fs.existsSync(path.resolve(this._sourceCodeDir, dir)));
+    this._ctx.logger.info('buildPath', buildPath);
+    if (buildPath) {
+      return path.resolve(this._sourceCodeDir, buildPath);
+    }
+    return null;
+  }
+
+  publish() {
+
+  }
+
   execCommand(command) {
     const commands = command.split(' ');
     if (commands.length === 0) {
