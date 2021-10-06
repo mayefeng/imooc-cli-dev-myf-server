@@ -20,6 +20,7 @@ async function createCloudBuildTask(ctx, app) {
     version: task.version,
     branch: task.branch,
     buildCmd: task.buildCmd,
+    prod: task.prod,
   }, ctx);
 }
 

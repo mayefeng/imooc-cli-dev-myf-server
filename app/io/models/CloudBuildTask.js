@@ -6,6 +6,8 @@ const userHome = require('user-home');
 const Git = require('simple-git');
 
 const { SUCCESS, FAILED } = require('../../const');
+const config = require('../../../config/db');
+const OSS = require('../models/OSS');
 
 class CloudBuildTask {
   constructor(options, ctx) {
@@ -25,14 +27,23 @@ class CloudBuildTask {
     this._dir = path.resolve(userHome, '.imooc-cli-dev-myf', 'cloudbuild', `${this._name}@${this._version}`);
     // 缓存源码目录
     this._sourceCodeDir = path.resolve(this._dir, this._name);
+    // 发布是否为正式环境
+    this._prod = options.prod === 'true';
     this._logger.info('_dir', this._dir);
     this._logger.info('_sourceCodeDir', this._sourceCodeDir);
+    this._logger.info('_prod', this._prod);
   }
 
   async prepare() {
     fse.ensureDirSync(this._dir);
     fse.emptyDirSync(this._dir);
     this._git = new Git(this._dir);
+    if (this._prod) {
+      this.oss = new OSS(config.OSS_PROD_BUCKET);
+    } else {
+      this.oss = new OSS(config.OSS_DEV_BUCKET);
+    }
+    console.log('oss=======', this.oss);
     return this.success();
   }
 
