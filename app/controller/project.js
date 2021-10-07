@@ -2,6 +2,9 @@
 
 const Controller = require('egg').Controller;
 const mongo = require('../utils/mongo');
+const OSS = require('../io/models/OSS');
+const config = require('../../config/db');
+const { failed, success } = require('../utils/request');
 
 class ProjectController extends Controller {
   // 获取项目/组件的代码模板
@@ -9,6 +12,31 @@ class ProjectController extends Controller {
     const { ctx } = this;
     const data = await mongo().query('project');
     ctx.body = data;
+  }
+
+  async getOSSProject() {
+    const { ctx } = this;
+    let ossProjectType = ctx.query.type;
+    const ossProjectName = ctx.query.name;
+    if (!ossProjectName) {
+      ctx.body = failed('项目名称不存在');
+      return;
+    }
+    if (!ossProjectType) {
+      ossProjectType = 'prod';
+    }
+    let oss;
+    if (ossProjectType === 'prod') {
+      oss = new OSS(config.OSS_PROD_BUCKET);
+    } else {
+      oss = new OSS(config.OSS_DEV_BUCKET);
+    }
+    if (oss) {
+      const fileList = await oss.list(ossProjectName);
+      ctx.body = success('获取项目文件成功', fileList);
+    } else {
+      ctx.body = failed('获取项目文件失败');
+    }
   }
 
   async getRedis() {
