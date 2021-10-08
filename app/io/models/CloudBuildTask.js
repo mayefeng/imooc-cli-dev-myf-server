@@ -10,9 +10,11 @@ const { SUCCESS, FAILED } = require('../../const');
 const config = require('../../../config/db');
 const OSS = require('../models/OSS');
 
+const REDIS_PREFIX = 'cloudbuild';
 class CloudBuildTask {
-  constructor(options, ctx) {
+  constructor(options, ctx, app) {
     this._ctx = ctx;
+    this._app = app;
     this._logger = this._ctx.logger;
     // 仓库地址
     this._repo = options.repo;
@@ -163,6 +165,20 @@ class CloudBuildTask {
       data,
     };
   }
+
+  async clean() {
+    if (fs.existsSync(this._dir)) {
+      fse.removeSync(this._dir);
+    }
+    const { socket } = this._ctx;
+    const client = socket.id;
+    const redisKey = `${REDIS_PREFIX}:${client}`;
+    await this._app.redis.del(redisKey);
+  }
+
+  isProd() {
+    return this._prod;
+  }
 }
 
 function checkCommand(command) {
@@ -186,4 +202,26 @@ function exec(command, args, options) {
 
 }
 
-module.exports = CloudBuildTask;
+async function createCloudBuildTask(ctx, app) {
+  const { socket, helper } = ctx;
+  const client = socket.id;
+  const redisKey = `${REDIS_PREFIX}:${client}`;
+  const redisTask = await app.redis.get(redisKey);
+  const task = JSON.parse(redisTask);
+  socket.emit('build', helper.parseMsg('create task', {
+    message: '创建云构建任务',
+  }));
+  return new CloudBuildTask({
+    repo: task.repo,
+    name: task.name,
+    version: task.version,
+    branch: task.branch,
+    buildCmd: task.buildCmd,
+    prod: task.prod,
+  }, ctx, app);
+}
+
+module.exports = {
+  CloudBuildTask,
+  createCloudBuildTask,
+};

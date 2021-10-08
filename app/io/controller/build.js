@@ -1,28 +1,7 @@
 'use strict';
 
-const CloudBuildTask = require('../models/CloudBuildTask');
+const { createCloudBuildTask } = require('../models/CloudBuildTask');
 const { FAILED } = require('../../const');
-
-const REDIS_PREFIX = 'cloudbuild';
-
-async function createCloudBuildTask(ctx, app) {
-  const { socket, helper } = ctx;
-  const client = socket.id;
-  const redisKey = `${REDIS_PREFIX}:${client}`;
-  const redisTask = await app.redis.get(redisKey);
-  const task = JSON.parse(redisTask);
-  socket.emit('build', helper.parseMsg('create task', {
-    message: '创建云构建任务',
-  }));
-  return new CloudBuildTask({
-    repo: task.repo,
-    name: task.name,
-    version: task.version,
-    branch: task.branch,
-    buildCmd: task.buildCmd,
-    prod: task.prod,
-  }, ctx);
-}
 
 async function prepare(cloudBuildTask, socket, helper) {
   socket.emit('build', helper.parseMsg('prepare', {
@@ -133,6 +112,10 @@ module.exports = app => {
         await build(cloudBuildTask, socket, helper);
         await prePublish(cloudBuildTask, socket, helper);
         await publish(cloudBuildTask, socket, helper);
+        socket.emit('build', helper.parseMsg('build success', {
+          message: `云构建成功，访问连接：https://${cloudBuildTask.isProd() ? 'myf-cli' : 'myf-cli-dev-bucket'}.mayefeng.xyz/${cloudBuildTask._name}`,
+        }));
+        socket.disconnect();
       } catch (error) {
         socket.emit('build', helper.parseMsg('error', {
           message: '云构建失败，失败原因：' + error.message,
